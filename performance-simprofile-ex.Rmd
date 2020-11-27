@@ -5,6 +5,7 @@ $y \sim t(\text{ncp}= X \beta, \text{df}=4)$ mit $t(4)$-verteilten Fehlern und
 linearem Prädiktor $X \beta$ zu bestimmen:
 ```{r, slow_sim}
 source("slow-sim.R")
+source("fast_sim.R")
 
 set.seed <- 232323
 observations <- 5000
@@ -17,11 +18,32 @@ testdata <- as.data.frame(
 test <- simulate(reps = 100, seed = 20141028, data = testdata)
 
 system.time(test <- simulate(reps = 100, seed = 20141028, data = testdata))
+system.time(test <- simulate_fast(reps = 100, seed = 20141028, data = testdata))
 ```
+
+```{r}
+source("fast_sim.R")
+source("slow-sim.R")
+
+bench::mark(
+  {test <- simulate(reps = 100, seed = 20141028, data = testdata)},
+  {test <- simulate_fast(reps = 100, seed = 20141028, data = testdata)},
+  relative = TRUE
+)[,1:5]
+```
+
+
+
 Die Simulation ist recht ineffizient programmiert.
 
 a) Benutzen Sie die in der Vorlesung kennengelernten Profiling-Methoden um die Stellen zu identifizieren an denen das Skript in `slow-sim.R` die meiste Zeit verbringt. 
+
+- estimate coefficients dauert sehr lang, hierbei besonders die funktion lm
+- model.matrix.default bei simulate_response dauert auch lang.
+
 b) Modifizieren Sie den Code in `slow-sim.R` so, dass er i) **mindestens 5x schneller** läuft (ohne dass sich die Ergebnisse qualitativ ändern!!) und ii) unseren Vorstellungen von sauber dokumentierter, gut strukturierter und defensiv programmierter Software entspricht.
+
+
 
 *Hinweis:* Betrachten Sie zu a) sowohl wo in dem Code von `slow-sim.R`  die meiste Zeit verbraucht wird als auch welche *eingebauten* R-Funktionen dort aufgerufen werden und was diese tun und wie.  
 Für b) sollten Sie sich zuerst mal überlegen was man hier eigentlich tun will ("First, solve the problem. Then, write the code.") um dann kritisch auf den Code zu gucken: Wo tut er mehr als er eigentlich muss? Wo wiederholt sich Schritte überflüssigerweise? Können Sie Berechnungen vektorisieren oder Zuweisungen prä-allozieren?  
